@@ -4,6 +4,7 @@ import dev.toktab.Tgram.model.User;
 import dev.toktab.Tgram.repository.UserRepo;
 import dev.toktab.Tgram.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -49,11 +50,22 @@ public class UserController {
     //todo delete/disable profile; update
     @GetMapping("/profile/delete")
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
-    public ResponseEntity<Object> disableUser(){//todo add Are you sure text so they can verify if they want to disable/delete or not
+    public ResponseEntity<Object> disableUser(@RequestParam(name = "confirm", defaultValue = "false") boolean confirm) {
+        // /profile/delete?confirm=true
+        if (!confirm) {
+            // If confirmation is not provided, return a redirect response
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.LOCATION, "/profile");
+            return ResponseEntity.status(HttpStatus.FOUND).headers(headers).build();
+        }
+
         var activeUser = userService.getActiveUserDetails();
         userService.disable(activeUser);
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User disabled. Please log out.\n'/logout");
+
+        // If you still want to include a response body, you can do so
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User disabled. Please log out.\n'/logout'");
     }
+
 
 //    @GetMapping("/users/single")
 //    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")

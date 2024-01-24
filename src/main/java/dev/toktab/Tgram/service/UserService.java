@@ -125,22 +125,6 @@ public class UserService {
         }
     }
 
-//    public ResponseEntity<Object> disable() {
-//        ResponseEntity<Object> activeUserDetails = getActiveUserDetails();
-//
-//        if(activeUserDetails.getStatusCode().is2xxSuccessful()){
-//            Object responseBody = activeUserDetails.getBody();
-//            if(responseBody instanceof User){
-//                User user = (User) responseBody;
-//                if(user.isEnabled()){
-//                    user.setEnabled(false);
-//                }else return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: User is disabled");
-//            }
-//        }
-//        //todo it stops at 136 and doesnt access 126
-//        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: Internal error, couldn't disable");
-//    }
-
     public void disable(ResponseEntity<Object> activeUser) {
         if (activeUser.getStatusCode().is2xxSuccessful()) {
             Object responseBody = activeUser.getBody();

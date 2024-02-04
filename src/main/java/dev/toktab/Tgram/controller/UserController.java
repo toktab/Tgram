@@ -15,11 +15,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
+import java.util.Optional;
+
 @RestController
 @RequestMapping
 public class UserController {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+
     @Autowired
     public UserController(UserService userService, PasswordEncoder passwordEncoder) {
         this.userService = userService;
@@ -27,28 +30,31 @@ public class UserController {
     }
 
     @GetMapping("/")
-    public String goHome(){
+    public String goHome() {
         return "Publicly accessible url";
     }
+
     @PostMapping("/register")
-    public ResponseEntity<Object> registerUser(@RequestBody User user){
+    public ResponseEntity<Object> registerUser(@RequestBody User user) {
         return userService.create(user);
     }
+
     @GetMapping("/admin/users/all")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<Object> getAllUsers(){
+    public ResponseEntity<Object> getAllUsers() {
         return userService.getAll();
     }
+
     @GetMapping("/profile")
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
-    public ResponseEntity<Object> getMyDetails(){
-        if(!userService.isEnabled(userService.getActiveUserDetails())){
+    public ResponseEntity<Object> getMyDetails() {
+        if (!userService.isEnabled(userService.getActiveUserDetails())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User disabled. Please log out.\n'/logout");
         }
         return userService.getActiveUserDetails();
     }
-    //todo delete/disable profile; update
-    @GetMapping("/profile/delete")
+
+    @DeleteMapping("/profile/delete")
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
     public ResponseEntity<Object> disableUser(@RequestParam(name = "confirm", defaultValue = "false") boolean confirm) {
         // /profile/delete?confirm=true
@@ -60,11 +66,40 @@ public class UserController {
         }
 
         var activeUser = userService.getActiveUserDetails();
-        userService.disable(activeUser);
-
-        // If you still want to include a response body, you can do so
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User disabled. Please log out.\n'/logout'");
+        return userService.disable(activeUser);
     }
+
+    @PostMapping("/profile/edit")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
+    public ResponseEntity<Object> updateUser(@RequestBody User newUser) {
+        var oldUserResponse = userService.getActiveUserDetails();
+        User oldUser = extractUserFromResponseEntity(oldUserResponse);
+        return userService.update(oldUser, newUser);
+
+        //example:
+        //POST
+//        {
+//            "username": "taba",
+//              "email": "taba@gmail.com",
+//              "password": "taba",
+//              "picture": "null"
+//        }
+
+        //Basic Auth
+        //toko toko
+    }
+    public User extractUserFromResponseEntity(ResponseEntity<Object> responseEntity) {
+        if (responseEntity.getBody() instanceof Optional) {
+            Optional<User> userOptional = (Optional<User>) responseEntity.getBody();
+            return userOptional.orElse(null);
+        } else {
+            return null;
+        }
+    }
+
+
+
+}
 
 
 //    @GetMapping("/users/single")
@@ -79,4 +114,4 @@ public class UserController {
 //        }
 //        return null;
 //    }
-}
+

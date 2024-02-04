@@ -15,9 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -60,37 +58,18 @@ public class UserService {
     }
 
     // UPDATE
-    public ResponseEntity<Object> update(User newUser) {
-        try {
-            Optional<User> optionalOldUser = userRepo.findById(newUser.getId());
-            if (optionalOldUser.isPresent()) {
-                User oldUser = optionalOldUser.get();
 
-                // Check if nothing changed
-                if (oldUser.equals(newUser)) {
-                    return ResponseEntity.status(HttpStatus.NOT_MODIFIED).body("Error: Nothing changed");
-                }
+    private boolean credentialsUsed(User updatedUser, int id) {
+        List<User> users = userRepo.findAll();
 
-                // Update fields
-                oldUser.setUsername(newUser.getUsername());
-                oldUser.setEmail(newUser.getEmail());
-                oldUser.setPassword(passwordEncoder.encode(newUser.getPassword()));
-                oldUser.setUpdatedOn(LocalDateTime.now());
-                oldUser.setEnabled(newUser.isEnabled());
-                oldUser.setPicture(newUser.getPicture());
-                oldUser.setRoles(newUser.getRoles());
-
-                // Save the updated user
-                userRepo.save(oldUser);
-
-                return ResponseEntity.ok("User updated");
+        // Use an iterator to safely remove elements
+        users.removeIf(user -> user.getId() == id);
+        for (User user : users) {
+            if (Objects.equals(user.getUsername(), updatedUser.getUsername()) || Objects.equals(user.getEmail(), updatedUser.getEmail())) {
+                return true;
             }
-            // User with the given ID not found
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: User not found");
-        } catch (Exception e) {
-            // Log the exception
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: Exception caught");
         }
+        return false;
     }
 
     public ResponseEntity<Object> getAll() {
@@ -125,7 +104,7 @@ public class UserService {
         }
     }
 
-    public void disable(ResponseEntity<Object> activeUser) {
+    public ResponseEntity<Object> disable(ResponseEntity<Object> activeUser) {
         if (activeUser.getStatusCode().is2xxSuccessful()) {
             Object responseBody = activeUser.getBody();
 
@@ -134,19 +113,27 @@ public class UserService {
 
                 if (userOptional.isPresent()) {
                     User user = userOptional.get();
-                    user.setEnabled(false);//Disabling
-                    userRepo.save(user);//Saving
 
+                    if (!user.isEnabled()) {
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: User is already disabled.");
+                    }
+
+                    user.setEnabled(false); // Disabling
+                    userRepo.save(user); // Saving
+
+                    return ResponseEntity.ok("User successfully disabled.");
                 } else {
-                    System.out.println("Response body is an empty Optional");
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: User not found in the response body.");
                 }
             } else {
-                System.out.println("Response body is not an Optional<User>. Actual class: " + responseBody.getClass());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: Response body is not an Optional<User>. Actual class: " + responseBody.getClass());
             }
         } else {
-            System.out.println("Response status is not successful");
+            return ResponseEntity.status(activeUser.getStatusCode()).body("Error: Response status is not successful. Status: " + activeUser.getStatusCode());
         }
     }
+
+
 
     public UserInfoDetails mapUserToUserInfoDetails(User user) {
         UserInfoDetails userInfoDetails = new UserInfoDetails();
@@ -199,6 +186,51 @@ public class UserService {
             System.out.println("Response status is not successful");
         }
         return false;
+    }
+
+    public ResponseEntity<Object> update(User oldUser, User newUser) {
+        //get oldUser id createdOn isEnabled role - not changeable
+        //change username; email; - must be checked before changing, can be not changed
+        //password; picture; - can be not changed
+        //updatedOn - must be changed
+
+        if (newUser.getUsername() == null) {newUser.setUsername(oldUser.getUsername());}
+        if (newUser.getEmail() == null) {newUser.setEmail(oldUser.getEmail());}
+        if (newUser.getPassword() == null) {newUser.setPassword(oldUser.getPassword());}
+        if (newUser.getPicture() == null) {newUser.setPicture(oldUser.getPicture());}
+
+        newUser.setId(oldUser.getId());
+        newUser.setCreatedOn(oldUser.getCreatedOn());
+        newUser.setEnabled(oldUser.isEnabled());
+        newUser.setRoles(oldUser.getRoles());
+        newUser.setUpdatedOn(oldUser.getUpdatedOn());
+
+        if(!updateAvailability(newUser)){
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Error: Username or Email already used by some other User");
+        }if(oldUser.equals(newUser)){
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Error: Nothing modified");
+        }else{
+            newUser.setUpdatedOn(LocalDateTime.now());
+            userRepo.save(newUser);
+            return ResponseEntity.ok("Successfully updated user:" + newUser.toString());
+        }
+    }
+    private boolean updateAvailability(User newUser) {
+        List<User> existingUsers = userRepo.findAll();
+        for(int i = 0; i < existingUsers.size(); i++){
+            if(existingUsers.get(i).getId()==newUser.getId()){
+                existingUsers.remove(i);
+                break;
+            }
+        }
+        for(int i = 0; i < existingUsers.size(); i++){
+            if(Objects.equals(existingUsers.get(i).getUsername(), newUser.getUsername()) ||
+                    Objects.equals(existingUsers.get(i).getEmail(), newUser.getEmail()))
+            {
+                return false; //username or email is already used by some other user
+            }
+        }
+        return true;
     }
 }
 

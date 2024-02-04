@@ -22,8 +22,8 @@ public class User {
     private boolean isEnabled;//auto
     private String picture;
     private String roles;
-
-    //post example
+}
+//post example
 //    {
 //            "username":"alcatras",
 //            "email":"tabagaritoko834@gmail.com",
@@ -31,4 +31,3 @@ public class User {
 //            "picture":"https://miro.medium.com/v2/resize:fit:1400/1*2eBdh0vLZjUyCDF6x1EqvQ.png",
 //            "roles":"ADMIN"
 //    }
-}

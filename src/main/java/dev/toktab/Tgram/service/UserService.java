@@ -84,7 +84,7 @@ public class UserService {
 
     public ResponseEntity<Object> getActiveUserDetails() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if(authentication != null && authentication.getPrincipal() instanceof UserDetails){
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
             return ResponseEntity.ok(userRepo
                     .findByUsername(
                             ((UserDetails) authentication
@@ -94,6 +94,7 @@ public class UserService {
         }
         return null;
     }
+
     public ResponseEntity<Object> get(String username) {
         Optional<User> user = userRepo.findByUsername(username);
 
@@ -132,7 +133,6 @@ public class UserService {
             return ResponseEntity.status(activeUser.getStatusCode()).body("Error: Response status is not successful. Status: " + activeUser.getStatusCode());
         }
     }
-
 
 
     public UserInfoDetails mapUserToUserInfoDetails(User user) {
@@ -194,10 +194,18 @@ public class UserService {
         //password; picture; - can be not changed
         //updatedOn - must be changed
 
-        if (newUser.getUsername() == null) {newUser.setUsername(oldUser.getUsername());}
-        if (newUser.getEmail() == null) {newUser.setEmail(oldUser.getEmail());}
-        if (newUser.getPassword() == null) {newUser.setPassword(oldUser.getPassword());}
-        if (newUser.getPicture() == null) {newUser.setPicture(oldUser.getPicture());}
+        if (newUser.getUsername() == null) {
+            newUser.setUsername(oldUser.getUsername());
+        }
+        if (newUser.getEmail() == null) {
+            newUser.setEmail(oldUser.getEmail());
+        }
+        if (newUser.getPassword() == null) {
+            newUser.setPassword(oldUser.getPassword());
+        }
+        if (newUser.getPicture() == null) {
+            newUser.setPicture(oldUser.getPicture());
+        }
 
         newUser.setId(oldUser.getId());
         newUser.setCreatedOn(oldUser.getCreatedOn());
@@ -205,28 +213,29 @@ public class UserService {
         newUser.setRoles(oldUser.getRoles());
         newUser.setUpdatedOn(oldUser.getUpdatedOn());
 
-        if(!updateAvailability(newUser)){
+        if (!updateAvailability(newUser)) {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Error: Username or Email already used by some other User");
-        }if(oldUser.equals(newUser)){
+        }
+        if (oldUser.equals(newUser)) {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Error: Nothing modified");
-        }else{
+        } else {
             newUser.setUpdatedOn(LocalDateTime.now());
             userRepo.save(newUser);
             return ResponseEntity.ok("Successfully updated user:" + newUser.toString());
         }
     }
+
     private boolean updateAvailability(User newUser) {
         List<User> existingUsers = userRepo.findAll();
-        for(int i = 0; i < existingUsers.size(); i++){
-            if(existingUsers.get(i).getId()==newUser.getId()){
+        for (int i = 0; i < existingUsers.size(); i++) {
+            if (existingUsers.get(i).getId() == newUser.getId()) {
                 existingUsers.remove(i);
                 break;
             }
         }
-        for(int i = 0; i < existingUsers.size(); i++){
-            if(Objects.equals(existingUsers.get(i).getUsername(), newUser.getUsername()) ||
-                    Objects.equals(existingUsers.get(i).getEmail(), newUser.getEmail()))
-            {
+        for (int i = 0; i < existingUsers.size(); i++) {
+            if (Objects.equals(existingUsers.get(i).getUsername(), newUser.getUsername()) ||
+                    Objects.equals(existingUsers.get(i).getEmail(), newUser.getEmail())) {
                 return false; //username or email is already used by some other user
             }
         }

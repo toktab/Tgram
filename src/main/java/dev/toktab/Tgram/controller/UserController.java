@@ -34,7 +34,7 @@ public class UserController {
         return "Publicly accessible url";
     }
 
-    @PostMapping("/register")
+    @PostMapping("/register")//create
     public ResponseEntity<Object> registerUser(@RequestBody User user) {
         return userService.create(user);
     }
@@ -45,7 +45,7 @@ public class UserController {
         return userService.getAll();
     }
 
-    @GetMapping("/profile")
+    @GetMapping("/profile")//read
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
     public ResponseEntity<Object> getMyDetails() {
         if (!userService.isEnabled(userService.getActiveUserDetails())) {
@@ -54,7 +54,7 @@ public class UserController {
         return userService.getActiveUserDetails();
     }
 
-    @DeleteMapping("/profile/delete")
+    @DeleteMapping("/profile/delete")//delete
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
     public ResponseEntity<Object> disableUser(@RequestParam(name = "confirm", defaultValue = "false") boolean confirm) {
         // /profile/delete?confirm=true
@@ -69,25 +69,14 @@ public class UserController {
         return userService.disable(activeUser);
     }
 
-    @PostMapping("/profile/edit")
+    @PostMapping("/profile/edit")//update
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
     public ResponseEntity<Object> updateUser(@RequestBody User newUser) {
         var oldUserResponse = userService.getActiveUserDetails();
         User oldUser = extractUserFromResponseEntity(oldUserResponse);
         return userService.update(oldUser, newUser);
-
-        //example:
-        //POST
-//        {
-//            "username": "taba",
-//              "email": "taba@gmail.com",
-//              "password": "taba",
-//              "picture": "null"
-//        }
-
-        //Basic Auth
-        //toko toko
     }
+
     public User extractUserFromResponseEntity(ResponseEntity<Object> responseEntity) {
         if (responseEntity.getBody() instanceof Optional) {
             Optional<User> userOptional = (Optional<User>) responseEntity.getBody();
@@ -96,22 +85,5 @@ public class UserController {
             return null;
         }
     }
-
-
-
 }
-
-
-//    @GetMapping("/users/single")
-//    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
-//    public ResponseEntity<Object> getMyDetails(){
-//        return ResponseEntity.ok(myUserRepo.findByEmail(getLoggedInUserDetails().getUsername()));
-//    }
-//    public UserDetails getLoggedInUserDetails(){
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        if(authentication != null && authentication.getPrincipal() instanceof UserDetails){
-//            return (UserDetails) authentication.getPrincipal();
-//        }
-//        return null;
-//    }
 

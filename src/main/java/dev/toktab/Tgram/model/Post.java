@@ -28,6 +28,15 @@ public class Post {
 
     private LocalDateTime updatedOn;
 
-    @ManyToMany(mappedBy = "posts")
-    private Set<User> users = new HashSet<>();
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 }
+//      {
+//        "title": "Example Post",
+//        "picture": "example_picture.jpg",
+//        "place": "Example Place",
+//        "user": {
+//        "id": 1
+//          }
+//      }

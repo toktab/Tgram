@@ -29,11 +29,6 @@ public class UserController {
         this.passwordEncoder = passwordEncoder;
     }
 
-    @GetMapping("/")
-    public String goHome() {
-        return "Publicly accessible url";
-    }
-
     @PostMapping("/register")//create
     public ResponseEntity<Object> registerUser(@RequestBody User user) {
         return userService.create(user);

@@ -24,13 +24,8 @@ public class User {
     private boolean isEnabled;//auto
     private String picture;
     private String roles;
-    @ManyToMany(cascade = {
-            CascadeType.PERSIST,
-            CascadeType.MERGE
-    })
-    @JoinTable(name = "user_post_connect",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "post_id"))
+
+    @OneToMany(mappedBy = "user")
     private Set<Post> posts = new HashSet<>();
 }
 //post example

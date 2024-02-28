@@ -28,15 +28,14 @@ public class Post {
 
     private LocalDateTime updatedOn;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    @Column(name = "user_id") // Define the column name
+    private Integer userId; // Change to Integer type for user_id
+
+    // Constructor, getters, and setters
 }
-//      {
+//        {
 //        "title": "Example Post",
 //        "picture": "example_picture.jpg",
 //        "place": "Example Place",
-//        "user": {
-//        "id": 1
-//          }
-//      }
+//        "userId": 1
+//        }

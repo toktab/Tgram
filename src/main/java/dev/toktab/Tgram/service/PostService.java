@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class PostService {
@@ -26,12 +25,14 @@ public class PostService {
             post.setCreatedOn(LocalDateTime.now());
             post.setUpdatedOn(LocalDateTime.now());
             postRepo.save(post);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Post Added");
+            return ResponseEntity.status(HttpStatus.CREATED).body("New post created successfully");
         } catch (Exception e) {
-            // Log the exception
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: Exception caught");
+            // Log the exception for debugging purposes
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: Failed to create a new post");
         }
     }
+
 
     //READALL
     public ResponseEntity<Object> getAll() {

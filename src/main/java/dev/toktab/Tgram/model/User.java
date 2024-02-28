@@ -13,19 +13,22 @@ import java.util.Set;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;//auto
+    private int id;
+
     @Column(unique = true)
     private String username;
+
     @Column(unique = true)
     private String email;
+
     private String password;
-    private LocalDateTime createdOn;//auto
-    private LocalDateTime updatedOn;//auto
-    private boolean isEnabled;//auto
+    private LocalDateTime createdOn;
+    private LocalDateTime updatedOn;
+    private boolean isEnabled;
     private String picture;
     private String roles;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "userId") // Update mappedBy to refer to userId
     private Set<Post> posts = new HashSet<>();
 }
 //post example

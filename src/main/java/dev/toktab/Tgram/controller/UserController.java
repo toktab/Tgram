@@ -64,7 +64,7 @@ public class UserController {
         return userService.disable(activeUser);
     }
 
-    @PostMapping("/profile/edit")//update
+    @PutMapping("/profile/edit")//update
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
     public ResponseEntity<Object> updateUser(@RequestBody User newUser) {
         ResponseEntity<Object> oldUserResponse = userService.getActiveUserDetails();

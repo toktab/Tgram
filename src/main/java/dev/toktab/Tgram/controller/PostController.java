@@ -43,8 +43,13 @@ public class PostController {
     @GetMapping("/feed/{postId}") // read post by ID
     public ResponseEntity<Object> getPostById(@PathVariable("postId") int postId) {
         Optional<Post> post = postService.getById(postId);
-        return post.<ResponseEntity<Object>>map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        if (post.isPresent()) {
+            return ResponseEntity.ok(post.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: Post not found with ID: " + postId);
+        }
     }
+
     @DeleteMapping("/feed/{postId}/delete") // delete
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
     public ResponseEntity<Object> deletePost(@RequestParam(name = "confirm", defaultValue = "false") boolean confirm, @PathVariable("postId") int postId) {
@@ -65,6 +70,28 @@ public class PostController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: Post not found with ID: " + postId);
         }
         return postService.delete(post);
+    }
+    @PutMapping("/feed/{postId}/edit") // Update
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
+    public ResponseEntity<Object> updatePost(@RequestBody Post newPost, @PathVariable("postId") int postId) {
+        // Get the current user details
+        ResponseEntity<Object> activeUserResponse = userService.getActiveUserDetails();
+        User activeUser = userService.extractUserFromResponseEntity(activeUserResponse);
+
+        // Check if the user is enabled
+        if (!userService.isEnabled(activeUserResponse)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User disabled. Please log out.\n'/logout");
+        }
+
+        // Get the post by postId
+        Optional<Post> postOptional = postService.getById(postId);
+        if (postOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: Post not found with ID: " + postId);
+        }
+        Post oldPost = postOptional.get();
+
+        // Update the post
+        return postService.update(oldPost, newPost);
     }
 
 }

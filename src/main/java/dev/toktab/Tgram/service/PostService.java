@@ -60,34 +60,66 @@ public class PostService {
         Post post = postOptional.get();
 
         // Check if the current user is authorized to delete the post
-        ResponseEntity<Object> authorizationResponse = canDeletePost(post);
-        if (authorizationResponse != null) {
-            return authorizationResponse;
+        if (!canBeInteracted(post)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error: You are not authorized to interact with this post.");
         }
+
         try {
-            postRepo.delete(post);//deleting
+            postRepo.delete(post); // Deleting
             return ResponseEntity.ok("Post deleted successfully");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: Exception caught while deleting the post");
         }
     }
 
-    public ResponseEntity<Object> canDeletePost(Post post) {
+    public ResponseEntity<Object> update(Post oldPost, Post newPost) {
+        // Ensure essential fields are not changed
+        newPost.setId(oldPost.getId());
+        newPost.setCreatedOn(oldPost.getCreatedOn());
+        newPost.setUserId(oldPost.getUserId()); // Assuming userId cannot be changed
+
+        // If title, picture, and place are null in the newPost, retain the old values
+        if (newPost.getTitle() == null) {
+            newPost.setTitle(oldPost.getTitle());
+        }
+        if (newPost.getPicture() == null) {
+            newPost.setPicture(oldPost.getPicture());
+        }
+        if (newPost.getPlace() == null) {
+            newPost.setPlace(oldPost.getPlace());
+        }
+
+        // Set updatedOn to current timestamp
+        newPost.setUpdatedOn(LocalDateTime.now());
+
+        // Check if any modification was made
+        if (oldPost.equals(newPost)) {
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Error: Nothing modified");
+        }
+
+        // Check if the current user is authorized to update the post
+        if (!canBeInteracted(oldPost)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error: You are not authorized to update this post.");
+        }
+
+        // Save the updated post
+        try {
+            postRepo.save(newPost);
+            return ResponseEntity.ok("Successfully updated post with ID: " + newPost.getId());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: Failed to update the post");
+        }
+    }
+
+
+
+    private boolean canBeInteracted(Post post) {
         ResponseEntity<Object> activeUserResponse = userService.getActiveUserDetails();
         User activeUser = userService.extractUserFromResponseEntity(activeUserResponse);
-        // Check if the current user is the creator of the post
-        if (post.getUserId() != activeUser.getId()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error: You are not authorized to delete this post.");
-        }
-        return null;
+        return activeUser != null && post.getUserId() == activeUser.getId();
     }
 
     public Optional<Post> getById(int postId) {
         return postRepo.findById(postId);
     }
-
-    //UPDATE
-
-
-
 }

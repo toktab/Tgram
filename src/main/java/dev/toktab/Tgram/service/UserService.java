@@ -241,5 +241,13 @@ public class UserService {
         }
         return true;
     }
+    public User extractUserFromResponseEntity(ResponseEntity<Object> responseEntity) {
+        if (responseEntity.getBody() instanceof Optional) {
+            Optional<User> userOptional = (Optional<User>) responseEntity.getBody();
+            return userOptional.orElse(null);
+        } else {
+            return null;
+        }
+    }
 }
 

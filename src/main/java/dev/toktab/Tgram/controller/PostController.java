@@ -22,25 +22,15 @@ public class PostController {
         this.postService = postService;
         this.userService = userService;
     }
+
     @PostMapping("/new")//create
     public ResponseEntity<Object> newPost(@RequestBody Post post) {
         ResponseEntity<Object> userObject = userService.getActiveUserDetails();
         if (!userService.isEnabled(userObject)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User disabled. Please log out.\n'/logout");
         }
-        User user = extractUserFromResponseEntity(userService.getActiveUserDetails());
+        User user = userService.extractUserFromResponseEntity(userObject);
         post.setUserId(user.getId());
         return postService.create(post);
-    }
-
-
-
-    public User extractUserFromResponseEntity(ResponseEntity<Object> responseEntity) {
-        if (responseEntity.getBody() instanceof Optional) {
-            Optional<User> userOptional = (Optional<User>) responseEntity.getBody();
-            return userOptional.orElse(null);
-        } else {
-            return null;
-        }
     }
 }

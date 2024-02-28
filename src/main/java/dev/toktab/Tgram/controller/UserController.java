@@ -67,18 +67,9 @@ public class UserController {
     @PostMapping("/profile/edit")//update
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
     public ResponseEntity<Object> updateUser(@RequestBody User newUser) {
-        var oldUserResponse = userService.getActiveUserDetails();
-        User oldUser = extractUserFromResponseEntity(oldUserResponse);
+        ResponseEntity<Object> oldUserResponse = userService.getActiveUserDetails();
+        User oldUser = userService.extractUserFromResponseEntity(oldUserResponse);
         return userService.update(oldUser, newUser);
-    }
-
-    public User extractUserFromResponseEntity(ResponseEntity<Object> responseEntity) {
-        if (responseEntity.getBody() instanceof Optional) {
-            Optional<User> userOptional = (Optional<User>) responseEntity.getBody();
-            return userOptional.orElse(null);
-        } else {
-            return null;
-        }
     }
 }
 

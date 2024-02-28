@@ -5,8 +5,10 @@ import dev.toktab.Tgram.model.User;
 import dev.toktab.Tgram.service.PostService;
 import dev.toktab.Tgram.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -33,4 +35,36 @@ public class PostController {
         post.setUserId(user.getId());
         return postService.create(post);
     }
+    @GetMapping("/feed/all")//all posts
+    public ResponseEntity<Object> getAllPosts() {
+        return postService.getAll();
+    }
+
+    @GetMapping("/feed/{postId}") // read post by ID
+    public ResponseEntity<Object> getPostById(@PathVariable("postId") int postId) {
+        Optional<Post> post = postService.getById(postId);
+        return post.<ResponseEntity<Object>>map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+    @DeleteMapping("/feed/{postId}/delete") // delete
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
+    public ResponseEntity<Object> deletePost(@RequestParam(name = "confirm", defaultValue = "false") boolean confirm, @PathVariable("postId") int postId) {
+        if (!confirm) {
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.LOCATION, "/profile");
+            return ResponseEntity.status(HttpStatus.FOUND).headers(headers).build();
+        }
+        ResponseEntity<Object> activeUserResponse = userService.getActiveUserDetails();
+        User activeUser = userService.extractUserFromResponseEntity(activeUserResponse);
+        // Check if the user is enabled
+        if (!userService.isEnabled(activeUserResponse)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User disabled. Please log out.\n'/logout");
+        }
+        // Get the post by postId
+        Optional<Post> post = postService.getById(postId);
+        if (post.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: Post not found with ID: " + postId);
+        }
+        return postService.delete(post);
+    }
+
 }

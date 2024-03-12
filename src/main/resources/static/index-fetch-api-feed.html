@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fetch API Example</title>
+</head>
+<body>
+<div id="data-container"></div>
+
+<script>
+  const apiUrl = 'http://localhost:8080/feed/all'; // Adjusted URL with the protocol
+
+  fetch(apiUrl)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Function to render data to the DOM
+      renderData(data);
+    })
+    .catch(error => {
+      console.error('There was a problem with the fetch operation:', error);
+    });
+
+  function renderData(data) {
+    const dataContainer = document.getElementById('data-container');
+    // Clear previous content
+    dataContainer.innerHTML = '';
+
+    // Loop through the data and create elements to display it
+    data.forEach(item => {
+      const itemElement = document.createElement('div');
+      itemElement.textContent = JSON.stringify(item);
+      dataContainer.appendChild(itemElement);
+    });
+  }
+</script>
+
+</body>
+</html>
